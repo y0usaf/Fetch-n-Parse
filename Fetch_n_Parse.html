@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Web Scraper Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Roboto', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 1rem;
+      background-color: #333;
+      color: #fff;
+    }
+    h1 {
+      margin-bottom: 1rem;
+    }
+    .form-container {
+      margin-bottom: 1rem;
+    }
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+    }
+    input, textarea, button {
+      margin: 0.5rem 0;
+      font-size: 16px;
+      width: 100%;
+    }
+    textarea {
+      min-height: 200px;
+      resize: vertical;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .output-container {
+      background-color: #444;
+      border-radius: 4px;
+      padding: 1rem;
+      width: 100%;
+      min-height: 200px;
+      overflow: auto;
+    }
+    .output-header {
+      font-size: 18px;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+    }
+    .error-message {
+      color: red;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Web Scraper Demo</h1>
+  <div class="form-container">
+    <label for="url-input">URL to scrape:</label>
+    <input type="url" id="url-input" placeholder="https://example.com">
+    <label for="rules-input">Parsing rules (JSON format):</label>
+    <textarea id="rules-input">{
+  "title": {
+    "type": "text",
+    "selector": "h1"
+  },
+  "items": {
+    "type": "list",
+    "selector": ".thumbnail",
+    "itemRules": {
+      "name": {
+        "type": "text",
+        "selector": ".caption > h4 > a"
+      },
+      "price": {
+        "type": "text",
+        "selector": ".price"
+      },
+      "image": {
+        "type": "attr",
+        "selector": "img",
+        "attribute": "src"
+      }
+    }
+  }
+}</textarea>
+    <button id="scrape-btn">Start Scraping</button>
+  </div>
+  <div class="output-container">
+    <div class="output-header">Extracted Data</div>
+    <pre id="output"></pre>
+  </div>
+  <script>
+    /**
+     * Fetches the content from a given URL.
+     * @param {string} url - The target URL to fetch content from.
+     * @returns {Promise<string>} - A promise that resolves to the fetched content.
+     */
+    async function fetchContent(url) {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Error fetching URL: ${response.statusText}`);
+      }
+      return await response.text();
+    }
+
+    /**
+     * Parses the content using DOMParser and extracts data based on the given rules.
+     * @param {string} content - The content to parse.
+     * @param {Object} rules - The rules to apply when extracting data.
+     * @returns {Object} - The extracted data.
+     */
+    function parseContent(content, rules) {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(content, 'text/html');
+
+      function extract(element, rule) {
+        if (rule.type === 'text') {
+          return element.querySelector(rule.selector).textContent.trim();
+        } else if (rule.type === 'attr') {
+          return element.querySelector(rule.selector).getAttribute(rule.attribute);
+        } else if (rule.type === 'list') {
+          const items = Array.from(element.querySelectorAll(rule.selector));
+          return items.map(item => parseElement(item, rule.itemRules));
+        }
+      }
+
+      function parseElement(element, rules) {
+        const result = {};
+        for (const key in rules) {
+          result[key] = extract(element, rules[key]);
+        }
+        return result;
+      }
+
+      return parseElement(doc.documentElement, rules);
+    }
+
+    /**
+     * Main function that sets the target URL, parsing rules, and runs the web scraper.
+     */
+    async function main() {
+      try {
+        const url = document.getElementById('url-input').value;
+        const rulesInput = document.getElementById('rules-input').value;
+
+        if (!url) {
+          throw new Error('Please enter a valid URL to scrape.');
+        }
+
+        let rules;
+        try {
+          rules = JSON.parse(rulesInput);
+        } catch (error) {
+          throw new Error('Error parsing rules JSON: ' + error.message);
+        }
+
+        // Fetch and parse the content.
+        const content = await fetchContent(url);
+        const data = parseContent(content, rules);
+
+        // Output the extracted data.
+        document.getElementById('output').textContent = JSON.stringify(data, null, 2);
+      } catch (error) {
+        const errorMessage = document.createElement('div');
+        errorMessage.classList.add('error-message');
+        errorMessage.textContent = error.message;
+        document.getElementById('output').innerHTML = '';
+        document.getElementById('output').appendChild(errorMessage);
+      }
+    }
+
+    document.getElementById('scrape-btn').addEventListener('click', main);
+  </script>
+</body>
+</html>

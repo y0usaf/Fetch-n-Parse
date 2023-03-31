@@ -1,28 +1,61 @@
-# Web Scraper Tool
+# Fetch 'n' Parse
 
-A simple and versatile web scraper tool built using JavaScript, axios, and cheerio. The tool is designed to fetch data from a given URL and extract desired information using user-defined parsing rules.
+Fetch 'n' Parse is a simple, user-friendly web scraping tool that allows you to extract data from any website using custom parsing rules. With its intuitive interface, you can configure the scraping process by providing a URL and a set of rules in JSON format.
 
-## Dependencies
+## Features
 
-- axios: A promise-based HTTP client for making HTTP requests
-- cheerio: A library for working with HTML and XML documents, allowing jQuery-like syntax
+- Customizable rules for data extraction
+- Supports text and attribute extraction, as well as nested lists
+- Real-time display of extracted data
+- Built with HTML, CSS, and vanilla JavaScript
+- No server-side code or database required
+
+## Getting Started
+
+1. Clone or download the repository.
+2. Open the `Fetch_n_Parse.html` file in your web browser.
 
 ## Usage
 
-There are two ways to use the web scraper tool:
+1. Enter the URL of the website you want to scrape.
+2. Define your parsing rules in the JSON format in the provided textarea. The rules should include the type of data to extract (text, attribute, or list), the CSS selector for the target element(s), and any additional information needed (e.g., the attribute name for attribute extraction).
+3. Click the "Start Scraping" button to fetch and parse the content of the specified URL.
+4. The extracted data will be displayed in real-time in the output area.
 
-### Node.js environment
+## Example
 
-1. Install the dependencies by running `npm install axios cheerio`.
-2. Modify the `config` object in the `main` function of the `web_scraper.js` file to set the target URL and parsing rules.
-3. Run the script using `node web_scraper.js`.
+Here's an example of parsing rules that can be used to extract the title, and a list of items with their names, prices, and images from a website:
 
-### Browser context
+    {
+      "title": {
+        "type": "text",
+        "selector": "h1"
+      },
+      "items": {
+        "type": "list",
+        "selector": ".thumbnail",
+        "itemRules": {
+          "name": {
+            "type": "text",
+            "selector": ".caption > h4 > a"
+          },
+          "price": {
+            "type": "text",
+            "selector": ".price"
+          },
+          "image": {
+            "type": "attr",
+            "selector": "img",
+            "attribute": "src"
+          }
+        }
+      }
+    }
+## Limitations
 
-1. Open the `web_scraper_demo.html` file in your preferred web browser.
-2. Modify the `config` object in the `main` function within the `<script>` tag to set the target URL and parsing rules.
-3. Click the "Start Scraping" button to run the web scraper and display the extracted data on the page.
+Due to CORS (Cross-Origin Resource Sharing) restrictions, you may encounter a "NetworkError when attempting to fetch resource" error when trying to fetch content from some websites. To resolve this issue, you can use a CORS proxy as an intermediary between your web application and the target website.
 
-## Showcase
+Please note that using a CORS proxy may have security and privacy implications. Make sure to use a trustworthy CORS proxy and only fetch content from reliable sources.
+License
 
-This web scraper tool is suitable for showcasing programming skills, web scraping techniques, and working with external libraries in a GitHub repository or attached to a resume to demonstrate employability.
+Fetch 'n' Parse is released under the [MIT License.](https://opensource.org/license/mit/)
